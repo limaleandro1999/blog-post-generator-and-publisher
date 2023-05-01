@@ -1,0 +1,109 @@
+service: blog-automation-lambda
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: sa-east-1
+  lambdaHashingVersion: 20201221
+  tracing:
+    lambda: true
+  environment:
+    DYNAMODB_POST_TABLE: blog-posts
+    DEVTO_API_KEY: ${env:DEVTO_API_KEY}
+    LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
+    LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
+    LINKEDIN_ACCESS_TOKEN: ${env:LINKEDIN_ACCESS_TOKEN}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegment
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "*"
+
+functions:
+  # Function to generate the blog posts
+  # It will be triggered by a cron job every Monday and Thursday at 09:30 AM BRT
+  generateBlogPosts:
+    handler: src/generate-posts.handler
+    timeout: 60
+    events:
+      - schedule: cron(30 12 ? * MON,THU *)
+  # Function to publish the blog posts on dev.to
+  # It will be triggered whenever a blog post is updated adding a content
+  publishBlogPosts:
+    handler: src/publish-posts.handler
+    timeout: 60
+    events:
+      - stream:
+          type: dynamodb
+          arn: !GetAtt BlogPostsTable.StreamArn
+          batchSize: 1
+          maximumRetryAttempts: 5
+          filterPatterns:
+            - eventName: [MODIFY]
+              dynamodb:
+                NewImage:
+                  content:
+                    S: [{ exists: true }]
+  # Function to share the blog posts on LinkedIn
+  # It will be triggered whenever a new blog post is updating setting published to true
+  shareBlogPosts:
+    handler: src/share-posts.handler
+    timeout: 60
+    events:
+      - stream:
+          type: dynamodb
+          arn: !GetAtt BlogPostsTable.StreamArn
+          batchSize: 1
+          maximumRetryAttempts: 5
+          filterPatterns:
+            - eventName: [MODIFY]
+              dynamodb:
+                NewImage:
+                  published:
+                    BOOL: [true]
+
+# Resources to create the dynamodb table
+resources:
+  Resources:
+    BlogPostsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: title
+            AttributeType: S
+        KeySchema:
+          - AttributeName: title
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+  Outputs:
+    BlogPostsTableName:
+      Value: ${self:custom.tableName}
+
+# Plugins to run dynamodb locally
+plugins:
+  - serverless-dotenv-plugin
+
+custom:
+  tableName: blog-posts
+  
