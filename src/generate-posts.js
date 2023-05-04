@@ -21,7 +21,7 @@ const getAllThePosts = async () => {
 
 // get recommendation prompt for the already published posts
 const getRecommendationPrompt = async () => {
-    const notPublishedPosts = posts?.filter((post) => post.content !== undefined);
+    const notPublishedPosts = posts?.filter((post) => post.published);
 
     return `${notPublishedPosts.map((post) => `Title: ${post.title} URL: ${post.link}`)}`;
 }
