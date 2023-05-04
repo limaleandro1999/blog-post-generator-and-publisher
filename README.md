@@ -13,7 +13,7 @@ This project is a serverless application that automates the process of generatin
 
 ## Architecture
 
-![Architecture diagram](https://i.imgur.com/ZnvBhJw.png)
+![Architecture diagram](static/blog-post-generator-diagram.png)
 
 The application consists of the following components:
 
