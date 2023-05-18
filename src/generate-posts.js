@@ -20,14 +20,15 @@ const getAllThePosts = async () => {
 }
 
 // get recommendation prompt for the already published posts
-const getRecommendationPrompt = async () => {
+const getRecommendationPrompt = () => {
+    console.log('posts', posts);
     const notPublishedPosts = posts?.filter((post) => post.published);
 
     return `${notPublishedPosts.map((post) => `Title: ${post.title} URL: ${post.link}`)}`;
 }
 
 // get the next blog post title
-const getNextBlogPost = async () => {
+const getNextBlogPost = () => {
     return posts?.find((post) => !post.content);
 }
 
@@ -35,14 +36,19 @@ const getNextBlogPost = async () => {
 const generateBlogPost = async (title) => {
     try {
         const openai = getOpenAIInstance();
+        const prompt = `
+            Generate blog post using markdown with the title ${title}.
+            Try to keep a good SEO score.
+            Only post links that are relevant to the topic and for official sites, you can also use the blog posts that I'll metion.
+            Add some code examples and try to keep the post with less than 1000 words. 
+            If it's possible, refer two of these blog posts: ${getRecommendationPrompt()}
+        `;
+        console.log('prompt', prompt);
+        console.log('recommentations', getRecommendationPrompt());
+        
         const response = await openai.createCompletion({
             model: 'text-davinci-003',
-            prompt: `
-                Generate blog post using markdown with the title ${title}.
-                Try to keep a good SEO score.
-                Add some code examples and try to keep the post with less than 1000 words. 
-                If it's possible, refer one or two of these blog posts: ${getRecommendationPrompt()}
-            `,
+            prompt,
             max_tokens: 3000,
         });
         return response.data.choices[0].text; 
@@ -77,7 +83,7 @@ const handler = async (event, context) => {
     console.log('Generating blog post...');
     
     posts = await getAllThePosts();
-    const nextPostToBePublished = await getNextBlogPost();
+    const nextPostToBePublished = getNextBlogPost();
 
     if (!nextPostToBePublished) {
         console.log('There is no blog post to be published!');

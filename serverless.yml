@@ -36,12 +36,12 @@ provider:
 
 functions:
   # Function to generate the blog posts
-  # It will be triggered by a cron job every Tuesday, Thursday and Saturday at 09:30 AM BRT
+  # It will be triggered by a cron job every Tuesday, Thursday and Saturday at 10:30 AM BRT
   generateBlogPosts:
     handler: src/generate-posts.handler
-    timeout: 120
+    timeout: 240
     events:
-      - schedule: cron(30 12 ? * TUE,THU,SAT *)
+      - schedule: cron(30 13 ? * TUE,THU,SAT *)
   # Function to publish the blog posts on dev.to
   # It will be triggered whenever a blog post is updated adding a content
   publishBlogPosts:
