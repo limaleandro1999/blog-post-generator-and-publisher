@@ -41,7 +41,7 @@ const generateBlogPost = async (title) => {
             Try to keep a good SEO score.
             Only post links that are relevant to the topic and for official sites, you can also use the blog posts that I'll metion.
             Add some code examples and try to keep the post with less than 1000 words. 
-            If it's possible, refer two of these blog posts: ${getRecommendationPrompt()}
+            If it's possible, choose ONLY TWO of these blog posts that are RELATABLE to the one that will be generated: ${getRecommendationPrompt()}
         `;
         console.log('prompt', prompt);
         console.log('recommentations', getRecommendationPrompt());
@@ -51,8 +51,13 @@ const generateBlogPost = async (title) => {
             prompt,
             max_tokens: 3000,
         });
+
+        console.log('finished generating');
+        console.log('response', response.data);
+
         return response.data.choices[0].text; 
     } catch (error) {
+        console.log('error', error);
         console.log(error.response.data);
     }
 };
