@@ -1,5 +1,5 @@
 service: blog-automation-lambda
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 useDotenv: true
 
@@ -106,4 +106,3 @@ plugins:
 
 custom:
   tableName: blog-posts
-  

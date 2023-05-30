@@ -101,6 +101,18 @@ const handler = async (event, context) => {
     }
 
     const content = await generateBlogPost(nextPostToBePublished.title);
+
+    if (!content) {
+        console.log(`Error generating blog post for ${nextPostToBePublished.title}`);
+
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: `Error generating blog post for ${nextPostToBePublished.title}`,
+            }),
+        };
+    }
+
     const response = await saveBlogPost(nextPostToBePublished.title, content);
     
     console.log(response);
